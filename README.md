@@ -4,7 +4,7 @@
 
 ## 여는 법
 - 내 PC : `index.html` 더블클릭
-- 인터넷 : (배포 후 Vercel 주소를 여기에 적기)
+- 인터넷 : https://workshop1026.vercel.app/
 
 ## 파일
 | 파일 | 역할 |
