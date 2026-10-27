@@ -15,6 +15,8 @@
 | app.js | 화면 동작 |
 | config.js | Supabase 주소 · 공개용 키 |
 | setup.sql | Supabase 표 wx_tasks 만들기 (SQL Editor 에서 실행) |
+| api/kma.js | 서버 함수 : `/api/kma?region=대전` → 그 지역 일정 · 날씨 · 판단 (JSON) |
+| .env.example | 필요한 키 이름 견본 (KMA_KEY) — 진짜 키는 Vercel 환경변수에 |
 | PRD.md | 무엇을 · 왜 만드는지 |
 | CLAUDE.md | AI가 지킬 작업 규칙 |
 | .gitignore | GitHub에 올리지 않을 파일 목록 |
