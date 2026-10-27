@@ -30,10 +30,6 @@ async function loadTasks() {
   combineTasks();
 }
 
-function weatherText(w) {
-  return w ? w.tempMax + '℃ · ' + w.windMax + 'm/s · ' + w.rainProb + '%' : '-';
-}
-
 // 오늘 날짜 (YYYY-MM-DD, 내 PC 시간 기준)
 function todayText() {
   const d = new Date();
@@ -106,7 +102,20 @@ async function loadWeather() {
   renderTasks();
 }
 
+// 04 단원 : 지금 표를 md 파일로 내려받기 (내 PC 다운로드 폴더)
+function saveJudgeMd() {
+  const testMode = new URLSearchParams(location.search).get('test');
+  const md = buildJudgeMd(todayText(), tasks, weatherByRegion, testMode);
+  const url = URL.createObjectURL(new Blob([md], { type: 'text/markdown;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '현장일정_판단_' + todayText() + '.md';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);   // 바로 지우면 내려받기가 취소되는 브라우저가 있음
+}
+
 document.getElementById('todayBox').textContent = todayText();
 document.getElementById('taskForm').addEventListener('submit', addTask);
+document.getElementById('mdButton').addEventListener('click', saveJudgeMd);
 loadTasks().then(renderTasks);
 loadWeather();
