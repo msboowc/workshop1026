@@ -1,21 +1,33 @@
 // app.js – 화면 동작 (목록 그리기, 일정 추가)
 
-// 01 단원 : 일정 목록을 코드 안에 둠 (가상 데이터) → 04 단원에서 data/tasks.json 으로 분리
-const SAMPLE_TASKS = [
-  { title: '다중이용시설 안전점검', region: '세종', kind: '야외', owner: '김안전' },
-  { title: '시민 안전체험 행사 운영', region: '보령', kind: '야외', owner: '이행사' },
-  { title: '옥상 태양광 설비 점검', region: '태안', kind: '고소', owner: '박설비' },
-  { title: '하천 수위계 확인', region: '대전', kind: '야외', owner: '최현장' },
-  { title: '청사 외벽 간판 보수', region: '세종', kind: '고소', owner: '정시설' },
-  { title: '비상연락 훈련', region: '대전', kind: '실내', owner: '한상황' },
-];
-
+// 04 단원 : 일정 목록은 data/tasks.json 에서 읽고, 화면에서 추가한 일정만 브라우저(wx_added)에 저장
+let fileTasks = [];         // data/tasks.json 에서 읽은 일정
+let fileError = false;      // 파일을 못 읽었으면 true (더블클릭으로 열었을 때 등)
 let tasks = [];
 let weatherByRegion = {};   // 03 단원에서 지역별 날씨를 넣음
 
-function loadTasks() {
-  const saved = JSON.parse(localStorage.getItem('wx_added') || '[]');
-  tasks = SAMPLE_TASKS.concat(saved);
+function savedTasks() {
+  return JSON.parse(localStorage.getItem('wx_added') || '[]');
+}
+
+// JSON 일정을 먼저, 그 뒤에 브라우저에 저장된 일정
+function combineTasks() {
+  tasks = fileTasks.concat(savedTasks());
+}
+
+async function loadTasks() {
+  try {
+    const res = await fetch('data/tasks.json');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const list = await res.json();
+    if (!Array.isArray(list)) throw new Error('목록 형식이 아님');
+    fileTasks = list;
+    fileError = false;
+  } catch (err) {
+    fileTasks = [];
+    fileError = true;
+  }
+  combineTasks();
 }
 
 function weatherText(w) {
@@ -33,6 +45,15 @@ function todayText() {
 function renderTasks() {
   const body = document.getElementById('taskList');
   body.innerHTML = '';
+  if (fileError) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 6;
+    td.className = 'stop';
+    td.textContent = '일정 파일을 읽지 못했습니다. 배포 주소로 열어 주세요.';
+    tr.appendChild(td);
+    body.appendChild(tr);
+  }
   for (const t of tasks) {
     const w = weatherByRegion[t.region];
     const r = judge(t.kind, w);
@@ -59,11 +80,11 @@ function addTask(e) {
     owner: document.getElementById('ownerInput').value.trim(),
   };
   if (!t.title || !t.owner) return;
-  const saved = JSON.parse(localStorage.getItem('wx_added') || '[]');
+  const saved = savedTasks();
   saved.push(t);
   localStorage.setItem('wx_added', JSON.stringify(saved));
   e.target.reset();
-  loadTasks();
+  combineTasks();
   renderTasks();
 }
 
@@ -87,6 +108,5 @@ async function loadWeather() {
 
 document.getElementById('todayBox').textContent = todayText();
 document.getElementById('taskForm').addEventListener('submit', addTask);
-loadTasks();
-renderTasks();
+loadTasks().then(renderTasks);
 loadWeather();
