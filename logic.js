@@ -13,4 +13,46 @@ function judge(kind, w) {
   return { level: 'ok', text: '진행' };
 }
 
-if (typeof module !== 'undefined') module.exports = { RULES, judge };
+// 03 단원 : 지역별 좌표 (도심 근처 대략값)
+const REGIONS = [
+  { name: '세종', lat: 36.48, lon: 127.29 },
+  { name: '대전', lat: 36.35, lon: 127.38 },
+  { name: '태안', lat: 36.75, lon: 126.30 },
+  { name: '보령', lat: 36.33, lon: 126.61 },
+];
+
+// Open-Meteo 주소 (4곳을 한 번에, 키 없음)
+function buildWeatherUrl() {
+  return 'https://api.open-meteo.com/v1/forecast'
+    + '?latitude=' + REGIONS.map(r => r.lat).join(',')
+    + '&longitude=' + REGIONS.map(r => r.lon).join(',')
+    + '&daily=temperature_2m_max,wind_speed_10m_max,precipitation_probability_max'
+    + '&timezone=Asia%2FSeoul&wind_speed_unit=ms&forecast_days=1';
+}
+
+// 응답 → { 세종: { tempMax, windMax, rainProb }, ... } (여러 곳이면 배열로 옴, 순서는 REGIONS 와 같음)
+function parseWeather(json) {
+  const list = Array.isArray(json) ? json : [json];
+  const result = {};
+  REGIONS.forEach((r, i) => {
+    const d = list[i] && list[i].daily;
+    if (!d) return;
+    const w = {
+      tempMax: d.temperature_2m_max[0],
+      windMax: d.wind_speed_10m_max[0],
+      rainProb: d.precipitation_probability_max[0],
+    };
+    if ([w.tempMax, w.windMax, w.rainProb].every(v => typeof v === 'number')) result[r.name] = w;
+  });
+  return result;
+}
+
+// 시험 모드 : mode 가 'wind' 면 모든 지역 풍속을 12 m/s 로 바꿈
+function applyTest(weather, mode) {
+  if (mode !== 'wind') return weather;
+  const result = {};
+  for (const name in weather) result[name] = Object.assign({}, weather[name], { windMax: 12 });
+  return result;
+}
+
+if (typeof module !== 'undefined') module.exports = { RULES, judge, REGIONS, buildWeatherUrl, parseWeather, applyTest };

@@ -67,7 +67,26 @@ function addTask(e) {
   renderTasks();
 }
 
+// 03 단원 : 지역별 날씨를 받아 표를 다시 그림 (실패해도 목록은 그대로)
+async function loadWeather() {
+  const box = document.getElementById('weatherBox');
+  const testMode = new URLSearchParams(location.search).get('test');
+  box.textContent = '날씨 불러오는 중…';
+  try {
+    const res = await fetch(buildWeatherUrl());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    weatherByRegion = applyTest(parseWeather(await res.json()), testMode);
+    const lines = REGIONS.map(r => r.name + ' ' + weatherText(weatherByRegion[r.name]));
+    if (testMode === 'wind') lines.push('시험 모드: 풍속 12 m/s');
+    box.textContent = lines.join('  |  ');
+  } catch (err) {
+    box.textContent = '날씨를 받지 못했습니다. 판단은 \'날씨 확인 전\'으로 표시합니다.';
+  }
+  renderTasks();
+}
+
 document.getElementById('todayBox').textContent = todayText();
 document.getElementById('taskForm').addEventListener('submit', addTask);
 loadTasks();
 renderTasks();
+loadWeather();
